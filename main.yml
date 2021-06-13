@@ -1,0 +1,28 @@
+- hosts: RHEL
+  become: true
+  tasks: 
+
+   - name: Updating dnf cache
+     dnf:
+       update_cache: yes
+       state: present
+ 
+   - name: installing packages
+     dnf:
+       name: {{item}}
+       state: present
+     loop:
+          - python3
+          - net-tools
+          - vim
+          - wget
+          - telnet
+          - epel-release
+          - htop
+          - chrony
+
+   - name: ensure chronyd(ntp) is running 
+     service:
+       name: chronyd
+       state: started
+       enabled: yes
