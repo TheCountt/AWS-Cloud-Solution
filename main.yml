@@ -9,9 +9,9 @@
  
    - name: installing packages
      dnf:
-       name: {{item}}
+       name: "{{ item }}"
        state: present
-     loop:
+     with_items:
           - python3
           - net-tools
           - vim
