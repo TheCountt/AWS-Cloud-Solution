@@ -2,15 +2,26 @@
   become: true
   tasks: 
 
-   - name: Updating dnf cache
+   - name: install EPEL repo
+     yum:
+       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+       state: latest
+       enablerepo: "epel"
+     register: result
+     until: result is succeeded
+     retries: 5
+     delay: 10
+
+
+   - name: Updating yum cache
      yum:
        update_cache: yes
-       state: present
- 
+       state: present 
+   
    - name: installing packages
      yum:
        name: "{{ item }}"
-       state: present
+       state: latest
      loop:
           - python3
           - net-tools
