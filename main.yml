@@ -3,15 +3,15 @@
   tasks: 
 
    - name: Updating dnf cache
-     dnf:
+     yum:
        update_cache: yes
        state: present
  
    - name: installing packages
-     dnf:
+     yum:
        name: "{{ item }}"
        state: present
-     with_items:
+     loop:
           - python3
           - net-tools
           - vim
