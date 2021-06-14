@@ -2,6 +2,11 @@
   become: true
   tasks: 
 
+   - name: get GPG-key
+     get_url:
+       url: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+       dest: /home/ec2-user
+
    - name: install EPEL repo
      yum:
        name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
