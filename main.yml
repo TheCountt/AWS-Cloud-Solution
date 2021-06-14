@@ -1,4 +1,4 @@
-- hosts: RHEL
+- hosts: Nginx, Bastion
   become: true
   tasks: 
 
