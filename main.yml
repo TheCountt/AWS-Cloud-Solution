@@ -1,11 +1,12 @@
-- hosts: Nginx, Bastion
+---
+- hosts: all
   become: true
   tasks: 
 
-   - name: get GPG-key
-     get_url:
-       url: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
-       dest: /home/ec2-user
+  #  - name: get GPG-key
+  #    get_url:
+  #      url: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
+  #      dest: /home/ec2-user
 
    - name: install EPEL repo
      yum:
@@ -28,6 +29,7 @@
        name: "{{ item }}"
        state: latest
      loop:
+          - yum-utils
           - python3
           - net-tools
           - vim
@@ -37,8 +39,58 @@
           - htop
           - chrony
 
+- hosts: Webservers
+  become: true
+  tasks:
+   
+   - name: Install apache server
+     yum:
+       name: httpd
+       state: present
+       
+
+   - name: Install remi-repo
+     yum:
+       name: http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+       state: latest
+
+   - name: installing packages
+     yum:
+       name: "{{ item }}"
+       state: present
+     loop:
+          - php
+          - php-mysqlnd
+          - php-fpm
+          - php-json
+          - php-opcache
+          - php-gd
+          - php-curl
+
+# - hosts: Webservers
+#   become: true
+#   tasks:
+
+#    - name: set SELINUX to allow http connection
+#      ansible.builtin.shell: setsebool -P httpd_can_network_connect 1
+
+- hosts: all
+  become: true
+  tasks:   
    - name: ensure chronyd(ntp) is running 
      service:
        name: chronyd
+       state: started
+       enabled: yes
+
+   - name: ensure php-fpm is running 
+     service:
+       name: php-fpm
+       state: started
+       enabled: yes
+
+   - name: ensure httpd is running 
+     service:
+       name: httpd
        state: started
        enabled: yes
