@@ -30,6 +30,7 @@
        state: latest
      loop:
           - yum-utils
+          - git
           - python3
           - net-tools
           - vim
@@ -59,6 +60,7 @@
        name: "{{ item }}"
        state: present
      loop:
+          - mysql
           - php
           - php-mysqlnd
           - php-fpm
@@ -67,12 +69,14 @@
           - php-gd
           - php-curl
 
-# - hosts: Webservers
-#   become: true
-#   tasks:
+ - hosts: Nginx
+   become: true
+   tasks:
 
-#    - name: set SELINUX to allow http connection
-#      ansible.builtin.shell: setsebool -P httpd_can_network_connect 1
+   - name: Install nginx
+     yum:
+       name: nginx
+       state: present
 
 - hosts: all
   become: true
@@ -92,5 +96,11 @@
    - name: ensure httpd is running 
      service:
        name: httpd
+       state: started
+       enabled: yes
+       
+   - name: ensure nginx is running 
+     service:
+       name: nginx
        state: started
        enabled: yes
