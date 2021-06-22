@@ -15,8 +15,8 @@
        enablerepo: "epel"
      register: result
      until: result is succeeded
-     retries: 5
-     delay: 10
+     retries: 2
+     delay: 05
 
 
    - name: Updating yum cache
@@ -39,17 +39,39 @@
           - epel-release
           - htop
           - chrony
+          
+  handlers:   
+  - name: ensure chronyd(ntp) is running 
+    service:
+       name: chronyd
+       state: started
+       enabled: yes
+
+
+- hosts: Nginx
+  become: true
+  tasks:
+   - name: Install nginx
+     yum:
+       name: nginx
+       state: present
+  
+  handlers:
+  - name: ensure nginx is running 
+    service:
+       name: nginx
+       state: started
+       enabled: yes
+
 
 - hosts: Webservers
   become: true
-  tasks:
-   
+  tasks: 
    - name: Install apache server
      yum:
        name: httpd
        state: present
        
-
    - name: Install remi-repo
      yum:
        name: http://rpms.remirepo.net/enterprise/remi-release-8.rpm
@@ -68,39 +90,17 @@
           - php-opcache
           - php-gd
           - php-curl
-
- - hosts: Nginx
-   become: true
-   tasks:
-
-   - name: Install nginx
-     yum:
-       name: nginx
-       state: present
-
-- hosts: all
-  become: true
-  tasks:   
-   - name: ensure chronyd(ntp) is running 
-     service:
-       name: chronyd
-       state: started
-       enabled: yes
-
-   - name: ensure php-fpm is running 
-     service:
-       name: php-fpm
-       state: started
-       enabled: yes
-
-   - name: ensure httpd is running 
-     service:
+   
+  handlers:
+  - name: ensure httpd is running 
+    service:
        name: httpd
        state: started
        enabled: yes
-       
-   - name: ensure nginx is running 
-     service:
-       name: nginx
+     
+  - name: ensure php-fpm is running 
+    service:
+       name: php-fpm
        state: started
        enabled: yes
+  
