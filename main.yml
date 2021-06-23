@@ -8,15 +8,15 @@
   #      url: https://dl.fedoraproject.org/pub/epel/RPM-GPG-KEY-EPEL-8
   #      dest: /home/ec2-user
 
-   - name: install EPEL repo
-     yum:
-       name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
-       state: latest
-       enablerepo: "epel"
-     register: result
-     until: result is succeeded
-     retries: 2
-     delay: 05
+  #  - name: install EPEL repo
+  #    yum:
+  #      name: https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+  #      state: latest
+  #      enablerepo: "epel"
+  #    register: result
+  #    until: result is succeeded
+  #    retries: 1
+  #    delay: 02
 
 
    - name: Updating yum cache
@@ -36,13 +36,12 @@
           - vim
           - wget
           - telnet
-          - epel-release
-          - htop
           - chrony
-          
-  handlers:   
-  - name: ensure chronyd(ntp) is running 
-    service:
+          - htop
+          - epel-release
+             
+   - name: ensure chronyd(ntp) is running 
+     service:
        name: chronyd
        state: started
        enabled: yes
@@ -54,11 +53,10 @@
    - name: Install nginx
      yum:
        name: nginx
-       state: present
-  
-  handlers:
-  - name: ensure nginx is running 
-    service:
+       state: present  
+
+   - name: ensure nginx is running 
+     service:
        name: nginx
        state: started
        enabled: yes
@@ -72,10 +70,10 @@
        name: httpd
        state: present
        
-   - name: Install remi-repo
-     yum:
-       name: http://rpms.remirepo.net/enterprise/remi-release-8.rpm
-       state: latest
+  #  - name: Install remi-repo
+  #    yum:
+  #      name: http://rpms.remirepo.net/enterprise/remi-release-8.rpm
+  #      state: latest
 
    - name: installing packages
      yum:
@@ -91,15 +89,15 @@
           - php-gd
           - php-curl
    
-  handlers:
-  - name: ensure httpd is running 
-    service:
+
+   - name: ensure httpd is running 
+     service:
        name: httpd
        state: started
        enabled: yes
      
-  - name: ensure php-fpm is running 
-    service:
+   - name: ensure php-fpm is running 
+     service:
        name: php-fpm
        state: started
        enabled: yes
