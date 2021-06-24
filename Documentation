@@ -1,0 +1,221 @@
+# Starting Off Your AWS Cloud Project
+## Pretasks:
+- Configure AWS account and Organization Unit
+  ![](imgs/orgs.png)
+  - Create an AWS account (ignore if you already have one)
+  - Create an Organization Unit 
+  - Click 'Add an AWS account' and create a new AWS account from there with name as DevOps (you'll need another email address)
+    ![](imgs/user.png)
+  - Login to the newly created account 
+- Create a free domain name from http://www.freenom.com
+- Create a hosted zone in AWS Route 53
+  - Go to the Route 53 Console
+  - Click 'Create Hosted Zone'
+  - For Domain name, enter the domain name you got from freenom
+  - Enter a description (if you wish)
+  - For type, select Public Hosted Zone
+    ![](imgs/hosted-zone.png)
+  - Click Create Hosted Zone
+  - Click on the created hosted zone and copy the contents of the NS record
+  - Click 'Manage Domain' next to your domain name, and click Management Tools and select Nameservers
+  - Click 'Use custom nameservers' radio button
+  - Replace the content there with the items you got from Route 53 (one per line)
+    ![](imgs/nameservers.png)
+- Ensure to tag all resources you create (Project, Environment, Name etc)
+
+## Step 1: Setup a Virtual Private Cloud
+![Reference image](imgs/archi.png)
+- Create a VPC from the VPC Management Console use a large enough CIDR block (/16)
+- Create subnets as shown in the diagram above
+  ![](imgs/subnets.png)
+  - For the public subnet, enable auto-assign IP by selecting the subnet (after you've created it) and clicking Actions button on the top right, then select Modify auto-assign IP settings and enable it
+- Create a route table and associate it with the public subnets
+  - Select the route table you created, click Actions on the top and click 'Edit Subnet associations'
+  - Select the public subnets and click save
+- Create a route table for the private subnets
+  - Repeate the steps above
+- Create an Internet Gateway, select it and click Actions the click Attach to VPC and attach it to the VPC you created
+- Add a new route to your public subnet route table
+  - Select the route table, click Actions and 'Edit routes'
+  - For destination, enter 0.0.0.0/0
+  - For target, select Internet Gateway and click the Internet Gateway you created
+  - Click Save
+- Create a NAT Gateway for your private subnets (create one in each public subnet)
+- Allocate three Elastic IPs and attach one of them to the NAT Gateway
+- Add a new route to your private route table with destination as 0.0.0.0/0 and target as the NAT Gateway you created
+  ![](imgs/privatertb.png)
+  ![](imgs/route-table.png)
+- Create a security group for:
+  - Nginx servers: Access to nginx servers should only be from the Application Load Balancer
+  - Bastion servers: Access to bastion servers should only be from the IPs of your workstation
+  - Application Load Balancer: ALB should be open to the internet
+  - Webservers: Webservers should only be accessible from the Nginx servers
+  - Data Layer: This comprises the RDS and EFS servers. Access to RDS should only be from Webservers, while Nginx and Webservers can have access to EFS
+  ![](imgs/sgs.png)
+
+## Step 2: Proceed with Compute Resources
+### Step 2.1: Setup Compute Resources for Nginx
+- Provision EC2 Instances for Nginx
+  - Create a t2.micro RHEL 8 instance in any of your two public AZs
+  - Install the following packages (we will be installing these packages a lot, so you can write a basic Ansible playbook that installs them)
+    ```
+    epel-release
+    python
+    htop
+    ntp
+    net-tools
+    vim
+    wget
+    telnet
+    ```
+  - Create an AMI from the instance
+    - Right click on the instance
+    - Select Image and click Create Image
+    - Give the AMI a name
+- Prepare Launch Template for Nginx
+  - From EC2 Console, click Launch Templates from the left pane
+  - Choose the Nginx AMI
+  - Select the instance type (t2.micro)
+  - Select the key pair
+  - Select the security group
+  - Add resource tags
+  - Click Advanced details, scroll down to the end and configure the user data script to update the yum repo and install nginx
+    ```
+    #!/bin/bash
+    yum update -y
+    yum install -y nginx
+    systemctl start nginx
+    systemctl enable nginx
+    ```
+    ![](imgs/ltnginx.png)
+- Configure Target Groups
+  - Select instances as target type 
+  - Enter the target group name
+  - Select the VPC you created
+  - For health checks, select HTTPS and health check path as /healthstatus
+  - Add Tags
+  - Register Nginx instances as targets
+- Configure Autoscaling for Nginx
+  - Enter the name
+  - Select the Nginx launch template, click Next
+    ![](imgs/scalingroup.png)
+  - Select the VPC and select the two public subnets you created, click Next
+  - For health checks, select ELB too. Click Next.
+  - For Group size, enter 2 for minimum and desired capacity, 4 as maximum capacity
+  - For Scaling policies, select Target Tracking scaling policy and set the target value as 90
+  - Click Next and add Notifications, create a new SNS topic and enter your email under 'With these recipients'
+    ![](imgs/sns.png)
+  - Add Tags
+  ![](imgs/autoscaler.png)
+### Step 2.2: Setup Compute Resources for Bastion
+- Provision EC2 Instances for Bastion server
+  - Create a t2.micro RHEL 8 instance in any of your two public AZs where you created Nginx instances
+  - Install the following packages
+    ```
+    epel-release
+    python
+    htop
+    ntp
+    net-tools
+    vim
+    wget
+    telnet
+    ```
+  - Attach an Elastic IP to each of the servers
+  - Create an AMI from the instance
+    - Right click on the instance
+    - Select Image and click Create Image
+    - Give the AMI a name
+- Prepare Launch Template for Nginx
+  - From EC2 Console, click Launch Templates from the left pane
+  - Choose the Bastion AMI
+  - Select the instance type (t2.micro)
+  - Select the key pair
+  - Select the security group
+  - Add resource tags
+  - Click Advanced details, scroll down to the end and configure the user data script to update the yum repo and install nginx
+    ```
+    #!/bin/bash
+    yum update -y
+    yum install -y ansible git
+    ```
+- Configure Target Groups
+  - Select instances as target type 
+  - Enter the target group name
+  - Select the VPC you created
+  - For health checks, select HTTPS and health check path as /healthstatus
+  - Add Tags
+  - Register Bastion instances as targets
+- Configure Autoscaling for Nginx
+  - Enter the name
+  - Select the Bastion launch template, click Next
+  - Select the VPC and select the two public subnets you created, click Next
+  - For health checks, select ELB too. Click Next.
+  - For Group size, enter 2 for minimum and desired capacity, 4 as maximum capacity
+  - For Scaling policies, select Target Tracking scaling policy and set the target value as 90
+  - Click Next and add Notifications, create a new SNS topic and enter your email under 'With these recipients'
+  - Add Tags
+
+### Step 2.3: Setup Compute Resources for Webservers
+We have to create two launch templates for Wordpress and Tooling respectively.
+- Provision two EC2 Instances one for Tooling and another for Wordpress
+  - Create a t2.micro RHEL 8 instance in any of your two public AZs where you created Nginx instances
+  - Install the following packages
+    ```
+    epel-release
+    python
+    htop
+    ntp
+    net-tools
+    vim
+    wget
+    telnet
+    ```
+  - Attach an Elastic IP to each of the servers
+  - Create an AMI from the instance
+    - Right click on the instance
+    - Select Image and click Create Image
+    - Give the AMI a name
+- Prepare Launch Template for Webservers
+  - From EC2 Console, click Launch Templates from the left pane
+  - Choose the Tooling AMI
+  - Select the instance type (t2.micro)
+  - Select the key pair
+  - Select the security group
+  - Add resource tags
+  - Click Advanced details, scroll down to the end and configure the user data script to update the yum repo and install nginx
+    ```
+    #!/bin/bash
+    yum update -y
+    yum install -y git php php-fpm php-mysqlnd
+    ```
+- Configure Target Groups
+  - Select instances as target type 
+  - Enter the target group name
+  - Select the VPC you created
+  - For health checks, select HTTPS and health check path as /healthstatus
+  - Add Tags
+  - Register Bastion instances as targets
+- Configure Autoscaling for Nginx
+  - Enter the name
+  - Select the Bastion launch template, click Next
+  - Select the VPC and select the two public subnets you created, click Next
+  - For health checks, select ELB too. Click Next.
+  - For Group size, enter 2 for minimum and desired capacity, 4 as maximum capacity
+  - For Scaling policies, select Target Tracking scaling policy and set the target value as 90
+  - Click Next and add Notifications, create a new SNS topic and enter your email under 'With these recipients'
+  - Add Tags
+    Repeat the above steps for Wordpress
+
+    ![](imgs/ltall.png)
+### Step 2.5: TLS Certificates from Amazon Certificate Manager (ACM)
+- Navigate to AWS ACM
+- Under 'Provision certificates' click Get started
+- Click Request a certificate
+- Enter the domain name you registered (*.\<domain-name>.com), click next
+- Select DNS validation and click Next
+- Tag the certificate, click Review then confirm and request
+- Click Continue
+- Click 'Export DNS Configuration file'
+- Go to Route 53
+- Create a new CNAME record with items from the DNS configuration.csv file downloaded.
