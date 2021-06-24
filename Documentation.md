@@ -219,3 +219,127 @@ We have to create two launch templates for Wordpress and Tooling respectively.
 - Click 'Export DNS Configuration file'
 - Go to Route 53
 - Create a new CNAME record with items from the DNS configuration.csv file downloaded.
+
+### Step 2.4: Configure Application Load Balancer (ALB) for Nginx
+Nginx instances should only accept connections coming from the ALB and deny any connections directly to it.
+- Create an internet facing ALB
+  - From the EC2 Console, click Load Balancers. 
+  - On the block for Application Load Balancers, click create
+  - Enter the name for the load balancer
+  - Since it's for the Nginx servers, add a HTTPS Listener
+  - Select the VPC you created, check the two AZs and add the public subnets you have. Click next.
+  - Select the certificate you created on ACM
+    ![](imgs/albacm.png)
+  - On the next page, select the ALB security group
+  - Configure routing, select the Nginx target group
+  - Register targets (unnecessary if you configured your target group correctly)
+  - Click Review and complete the process
+
+### Step 2.5: Configure ALB for Webservers
+The ALB for the webservers should not be internet facing. And we'll need two ALBs, one for Tooling and Wordpress
+- Create an internal ALB
+  - From the EC2 Console, click Load Balancers. 
+  - On the block for Application Load Balancers, click create
+  - Enter the name for the load balancer
+  - Select the VPC you created, check the two AZs and add the private subnets you have. Click next.
+  - On the next page, select the webserver security group
+  - Configure routing, select the Tooling target group
+  - Register targets (unnecessary if you configured your target group correctly)
+  - Click Review and complete the process
+  
+    Repeat the above steps for the Wordpress ALB
+
+## Step 3: Setup EFS
+- Navigate to EFS from your Management Console
+- Click create file system from the right
+- Click Customize
+- Enter the name for the EFS
+- Tag the resource
+- Leave everything else and click next
+- Select the VPC you created, select the two AZs and choose the private subnets
+- Select the EFS security group for each AZ
+  ![](imgs/efs-sg.png)
+- Click next, next then create
+
+## Step 4: Setup RDS
+### Step 4.1: Create a KMS key
+- Navigate to AWS KMS
+- Click create key
+- Make sure it's symmetric
+- Give the key an alias
+- For 'Define Key admininstrative privileges', select AWSServiceRoleForRDS and OrganizationAccountAccessRole ![](imgs/kms-config.png)
+- Select the same thing for Key usage
+- Click Finish
+  ![](imgs/kms.png)
+### Step 4.2: Create a DB Subnet Group
+- Navigate to RDS Management Console
+- Click the three horizontal lines on the top left
+- Select Subnet groups
+- Click Create DB subnet group
+- Enter the name, description and select your VPC
+- Under Add subnets, select the two AZs your data layer subnets are in and select the two private data layer subnets.
+- Click Create
+  ![](imgs/dbgroup.png)
+### Step 4.3: Create RDS Instance
+- Navigate to RDS Management Console
+- Click Create database
+- For Engine options, select MySQL
+- For Template, choose Dev/Test
+- Enter a name for your DB under DB instance identifier
+- Enter Master username and passsword
+- Choose the smallest possible instance class (to reduce costs)
+- Under Availability, select do not create a standby instance
+- Select your VPC, select the subnet group you created and also the data layer security group
+- Leave everything else and scroll down to Additional configuration
+- Enter initial database name (if you wish, or you could connect to it from your webserver and create required databases)
+- Leave everything else, scroll down to Encryption and select the KMS key you created
+- Scroll down and click Create database
+
+## Step 5: Tie Everything Together
+### Step 5.1: Configure DNS with Route 53
+- Create a CNAME record that points www.domain.com to the DNS name of your NGINX load balancer
+- Create a CNAME record that points tooling.domain.com to the DNS name of your NGINX load balancer
+  ![](imgs/records.png)
+### Step 5.2
+- Create two config files (one for tooling, one for wordpress) for the nginx load balancer and add to a github repo so you can pull the config during a scale out
+- The tooling config file should contain the following settings: 
+  ```
+  server {
+    server_name tooling.domain.com; # company tooling site
+    location ~ { # case-sensitive regular expression match
+		include /etc/nginx/mime.types;
+	    proxy_redirect      off;
+	    proxy_set_header    X-Real-IP $remote_addr;
+	    proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    Host $http_host;
+		proxy_pass http://tooling-ALB-DNS; # aws-lb
+	  }
+  }
+  ```
+  The wordpress config file:
+  ```
+  server {
+    server_name domain.com www.domain.com; # company tooling site
+    location ~ { # case-sensitive regular expression match
+		include /etc/nginx/mime.types;
+	    proxy_redirect      off;
+	    proxy_set_header    X-Real-IP $remote_addr;
+	    proxy_set_header    X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header    Host $http_host;
+		proxy_pass http://wordpress-ALB-DNS; # aws-lb
+	  }
+  }
+  ```
+  ![](imgs/end.png)
+Final implementation video: https://drive.google.com/file/d/1fZvoYLMCEkAyBAKxc8TxmUzA_0aNA36h/view?usp=sharing
+# Blockers
+- I was getting a 502 Bad Gateway error, to solve this, I checked the logs for my nginx instance (I had to SSH into it) and noticed it was returning a permission denied error, so I did:
+  ```
+  sudo setsebool -P httpd_can_network_connect 1
+  ```
+- To solve 403 errors that may arise from the internal webservers, simply add the above command to the user data script.
+- While settting up RDS to connect to Wordpress, I forgot to create a database for Wordpress. Also I couldn't get the webservers to connect to the db, so I executed the following:
+  ```
+  sudo setsebool -P httpd_can_network_connect_db 1
+  ```
+- To deploy the applications, I used Ansible to configure tooling servers, manually configured Wordpress, from the Bastion instance.
