@@ -1,57 +1,80 @@
-# Starting Off Your AWS Cloud Project
+# AWS Cloud Solution For 2 Company Websites Using Nginx as a Reverse Proxy
 ## Pretasks:
 - Configure AWS account and Organization Unit
-  ![](imgs/orgs.png)
   - Create an AWS account (ignore if you already have one)
   - Create an Organization Unit 
-  - Click 'Add an AWS account' and create a new AWS account from there with name as DevOps (you'll need another email address)
-    ![](imgs/user.png)
-  - Login to the newly created account 
+  - Click 'Add an AWS account' and create a new AWS account from there with name as Dev
+  - Invite another AWS account( You can open a totally new AWS account for this)
+  - Login and accept the invitation in the new AWS account
+    ![Inked{285E6809-6CE8-44C2-A935-1BC4DD4D2ADE} png_LI](https://user-images.githubusercontent.com/76074379/123252997-c7181700-d4a1-11eb-9534-a58fc329b71d.jpg)
+    
 - Create a free domain name from http://www.freenom.com
 - Create a hosted zone in AWS Route 53
   - Go to the Route 53 Console
   - Click 'Create Hosted Zone'
   - For Domain name, enter the domain name you got from freenom
-  - Enter a description (if you wish)
+  - Enter a description (if you want)
   - For type, select Public Hosted Zone
-    ![](imgs/hosted-zone.png)
   - Click Create Hosted Zone
   - Click on the created hosted zone and copy the contents of the NS record
   - Click 'Manage Domain' next to your domain name, and click Management Tools and select Nameservers
   - Click 'Use custom nameservers' radio button
   - Replace the content there with the items you got from Route 53 (one per line)
-    ![](imgs/nameservers.png)
+   ![{06426222-3F1B-43F4-9327-AAB4D3C8D49D} png](https://user-images.githubusercontent.com/76074379/123254120-1f9be400-d4a3-11eb-8d7a-f30383ab3865.jpg)
+   
+   ![{34F81419-3828-43E0-83FC-09DCE1246566} png](https://user-images.githubusercontent.com/76074379/123254328-625dbc00-d4a3-11eb-97fe-1e4d9868c831.jpg)
+   
 - Ensure to tag all resources you create (Project, Environment, Name etc)
 
 ## Step 1: Setup a Virtual Private Cloud
-![Reference image](imgs/archi.png)
+![tooling_project_15](https://user-images.githubusercontent.com/76074379/123254593-b4064680-d4a3-11eb-8099-329e9fb7c060.png)
+
 - Create a VPC from the VPC Management Console use a large enough CIDR block (/16)
+![{AD89A4F9-51A4-4D26-BCF4-AC862B5378A7} png](https://user-images.githubusercontent.com/76074379/123254815-f92a7880-d4a3-11eb-9625-330625b47592.jpg)
+
 - Create subnets as shown in the diagram above
-  ![](imgs/subnets.png)
+  
+  ![{6901C4E0-248E-4316-A52A-7288B2FEFA86} png](https://user-images.githubusercontent.com/76074379/123254959-26772680-d4a4-11eb-95bc-79320dd90009.jpg)
+  
   - For the public subnet, enable auto-assign IP by selecting the subnet (after you've created it) and clicking Actions button on the top right, then select Modify auto-assign IP settings and enable it
+  ![{374AB1F3-5FA4-4B51-95F4-A848FB2B530E} png](https://user-images.githubusercontent.com/76074379/123255086-49093f80-d4a4-11eb-83b9-dbfa4f9b33fa.jpg)
+  
 - Create a route table and associate it with the public subnets
   - Select the route table you created, click Actions on the top and click 'Edit Subnet associations'
   - Select the public subnets and click save
+![{0B0EE674-F32D-4295-815E-845FA90B282A} png](https://user-images.githubusercontent.com/76074379/123257860-8de2a580-d4a7-11eb-942b-d1dc29079b81.jpg)
+
 - Create a route table for the private subnets
   - Repeate the steps above
+  ![{B4B3AD01-F825-44D0-81C4-0B3F94F37803} png](https://user-images.githubusercontent.com/76074379/123258128-df8b3000-d4a7-11eb-9f32-fa2f012866c2.jpg)
+  
 - Create an Internet Gateway, select it and click Actions the click Attach to VPC and attach it to the VPC you created
+![{8CC4661F-BB81-4268-8AB0-1D11B8298D63} png](https://user-images.githubusercontent.com/76074379/123256553-f2046a00-d4a5-11eb-8d90-70d13f9a3c9e.jpg)
+
 - Add a new route to your public subnet route table
   - Select the route table, click Actions and 'Edit routes'
   - For destination, enter 0.0.0.0/0
   - For target, select Internet Gateway and click the Internet Gateway you created
   - Click Save
-- Create a NAT Gateway for your private subnets (create one in each public subnet)
-- Allocate three Elastic IPs and attach one of them to the NAT Gateway
+  ![{F1C4C675-ABA8-4CB8-A892-E42F79E51C44} png](https://user-images.githubusercontent.com/76074379/123258374-25e08f00-d4a8-11eb-8259-01cbc9c060e1.jpg)
+  
+- Create a NAT Gateway for your private subnets
+- Allocate three Elastic IPs and associate one of them to the NAT Gateway(the other two are for the Bastion Servers)
 - Add a new route to your private route table with destination as 0.0.0.0/0 and target as the NAT Gateway you created
-  ![](imgs/privatertb.png)
-  ![](imgs/route-table.png)
+![{CEA496E8-669A-4F44-8EB0-5D38E67156F6} png](https://user-images.githubusercontent.com/76074379/123258549-59bbb480-d4a8-11eb-9279-32786ead4b46.jpg)
+
 - Create a security group for:
   - Nginx servers: Access to nginx servers should only be from the Application Load Balancer
   - Bastion servers: Access to bastion servers should only be from the IPs of your workstation
   - Application Load Balancer: ALB should be open to the internet
   - Webservers: Webservers should only be accessible from the Nginx servers
   - Data Layer: This comprises the RDS and EFS servers. Access to RDS should only be from Webservers, while Nginx and Webservers can have access to EFS
-  ![](imgs/sgs.png)
+ 
+ ![{3F0F6E04-9341-41B6-8689-5A0C9B12E2F5} png](https://user-images.githubusercontent.com/76074379/123259114-f9794280-d4a8-11eb-86f9-2e4bbb883972.jpg)
+![{844AC8F2-4655-4DA1-A255-D659BCE1F23C} png](https://user-images.githubusercontent.com/76074379/123259119-faaa6f80-d4a8-11eb-9819-654eb54765dd.jpg)
+![{B4BB3DEE-B49F-4D1B-A1D6-C197EBA1E403} png](https://user-images.githubusercontent.com/76074379/123259121-fb430600-d4a8-11eb-94f7-d9e40c71a3b9.jpg)
+![{30A6CA71-1FE8-49FC-B53E-41A5F08C9CE4} png](https://user-images.githubusercontent.com/76074379/123259124-fb430600-d4a8-11eb-9d81-022b12bb456f.jpg)
+![{DC07A949-E80A-4A0F-99E3-62844788312B} png](https://user-images.githubusercontent.com/76074379/123259128-fbdb9c80-d4a8-11eb-8e3a-0426f0db199b.jpg)
 
 ## Step 2: Proceed with Compute Resources
 ### Step 2.1: Setup Compute Resources for Nginx
