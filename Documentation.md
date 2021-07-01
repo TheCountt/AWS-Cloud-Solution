@@ -354,8 +354,18 @@ The ALB for the webservers should not be internet facing. And we'll need two ALB
   }
   ```
   ![](imgs/end.png)
-Final implementation video: https://drive.google.com/file/d/1fZvoYLMCEkAyBAKxc8TxmUzA_0aNA36h/view?usp=sharing
+
 # Blockers
+
+- I had to install mod_ssl module manually on the apache webservers. After installing the module on my webservers, my target webserver instances on passed the healthcheck on port 443(HTTPS). For more on mod_ssl, https://en.wikipedia.org/wiki/Mod_ssl. I ran the following commands:
+```
+sudo dnf install -y mod_ssl
+
+apachectl -M | grep ssl
+
+sudo systemctl restart httpd
+```
+
 - I was getting a 502 Bad Gateway error, to solve this, I checked the logs for my nginx instance (I had to SSH into it) and noticed it was returning a permission denied error, so I did:
   ```
   sudo setsebool -P httpd_can_network_connect 1
