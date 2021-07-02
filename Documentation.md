@@ -239,7 +239,26 @@ We have to create two launch templates for Wordpress and Tooling respectively.
     systemctl restart httpd
     ```
     Repeat the above steps for Tooling Webserver. Check user data for Tooling Webserver below:
-    
+    ```
+    #!/bin/bash
+    yum update -y
+    yum install -y httpd
+    systemctl start httpd
+    systemctl enable httpd
+    touch /var/www/html/healthstatus
+    echo "tooling from $(hostname)" >> /var/www/html/healthstatus
+    yum install -y git
+    yum install -y mysql
+    yum install -y php php-{mysqlnd,cli,gd,common,mbstring,fpm,json}
+    yum install -y rpm-build
+    git clone https://github.com/aws/efs-utils
+    cd /efs-utils
+    yum -y install make
+    make rpm
+    yum install -y ./build/amazon-efs-utils*rpm
+    setenforce 0
+    systemctl restart httpd
+    ```
     
 - Configure Target Groups
   - Select instances as target type 
