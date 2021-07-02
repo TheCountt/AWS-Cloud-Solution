@@ -284,7 +284,7 @@ For Tooling
 - Navigate to AWS ACM
 - Under 'Provision certificates' click Get started
 - Click Request a certificate
-- Enter the domain name you registered (<domain-name>.com).Also enter additional domain names (tooling.<domain-name>.com, www.<domain-name>.com) to be used in the project.       Click next
+- Enter the domain name you registered (<*/domain-name>.com*).Also enter additional domain names (*tooling.</*domain-name>*.com*, *www.</*domain-name>.com*) to be used in the project. Click next
 - Select DNS validation and click Next
 - Tag the certificate, click Review then confirm and request
 - Click Continue
