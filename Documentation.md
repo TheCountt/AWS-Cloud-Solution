@@ -70,10 +70,9 @@
   - Webservers: Webservers should only be accessible from the Nginx servers
   - Data Layer: This comprises the RDS and EFS servers. Access to RDS should only be from Webservers, while Nginx and Webservers can have access to EFS
  
- ![{3F0F6E04-9341-41B6-8689-5A0C9B12E2F5} png](https://user-images.githubusercontent.com/76074379/123259114-f9794280-d4a8-11eb-86f9-2e4bbb883972.jpg)
+![{D774F831-FB08-49B6-954F-39BF9672634A} png](https://user-images.githubusercontent.com/76074379/124333770-01408300-db4a-11eb-908e-b130a8b5afe0.jpg)
 ![{844AC8F2-4655-4DA1-A255-D659BCE1F23C} png](https://user-images.githubusercontent.com/76074379/123259119-faaa6f80-d4a8-11eb-9819-654eb54765dd.jpg)
-![{B4BB3DEE-B49F-4D1B-A1D6-C197EBA1E403} png](https://user-images.githubusercontent.com/76074379/123259121-fb430600-d4a8-11eb-94f7-d9e40c71a3b9.jpg)
-![{30A6CA71-1FE8-49FC-B53E-41A5F08C9CE4} png](https://user-images.githubusercontent.com/76074379/123259124-fb430600-d4a8-11eb-9d81-022b12bb456f.jpg)
+![{E3F523F0-CD73-4976-AB7E-5047B2913943} png](https://user-images.githubusercontent.com/76074379/124333883-55e3fe00-db4a-11eb-8e17-538604b1eecc.jpg)
 ![{DC07A949-E80A-4A0F-99E3-62844788312B} png](https://user-images.githubusercontent.com/76074379/123259128-fbdb9c80-d4a8-11eb-8e3a-0426f0db199b.jpg)
 
 ## Step 2: Proceed with Compute Resources
