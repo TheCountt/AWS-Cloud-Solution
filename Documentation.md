@@ -122,18 +122,17 @@
   - For health checks, select HTTPS and health check path as /healthstatus
   - Add Tags
   - Register Nginx instances as targets
+
 - Configure Autoscaling for Nginx
   - Enter the name
   - Select the Nginx launch template, click Next
-    ![](imgs/scalingroup.png)
   - Select the VPC and select the two public subnets you created, click Next
   - For health checks, select ELB too. Click Next.
   - For Group size, enter 2 for minimum and desired capacity, 4 as maximum capacity
   - For Scaling policies, select Target Tracking scaling policy and set the target value as 90
   - Click Next and add Notifications, create a new SNS topic and enter your email under 'With these recipients'
-    ![](imgs/sns.png)
   - Add Tags
-  ![](imgs/autoscaler.png)
+  
 ### Step 2.2: Setup Compute Resources for Bastion
 - Provision EC2 Instances for Bastion server
   - Create a t2.micro RHEL 8 instance in any of your two public AZs where you created Nginx instances
@@ -164,7 +163,12 @@
     ```
     #!/bin/bash
     yum update -y
-    yum install -y ansible git
+    mkdir -p /var/www/html
+    echo "hello world from $(hostname)" > /var/www/html/healthstatus
+    yum install -y https://dl.fedoraproject.org/pub/epel/epel-release-latest-8.noarch.rpm
+    yum install -y python3
+    python3 -m pip install ansible
+    yum install -y git
     ```
 - Configure Target Groups
   - Select instances as target type 
@@ -173,6 +177,7 @@
   - For health checks, select HTTPS and health check path as /healthstatus
   - Add Tags
   - Register Bastion instances as targets
+
 - Configure Autoscaling for Nginx
   - Enter the name
   - Select the Bastion launch template, click Next
