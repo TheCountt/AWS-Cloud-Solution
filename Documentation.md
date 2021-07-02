@@ -70,16 +70,17 @@
   - Webservers: Webservers should only be accessible from the Nginx servers
   - Data Layer: This comprises the RDS and EFS servers. Access to RDS should only be from Webservers, while Nginx and Webservers can have access to EFS
  
-![{D774F831-FB08-49B6-954F-39BF9672634A} png](https://user-images.githubusercontent.com/76074379/124333770-01408300-db4a-11eb-908e-b130a8b5afe0.jpg)
-![{844AC8F2-4655-4DA1-A255-D659BCE1F23C} png](https://user-images.githubusercontent.com/76074379/123259119-faaa6f80-d4a8-11eb-9819-654eb54765dd.jpg)
-![{E3F523F0-CD73-4976-AB7E-5047B2913943} png](https://user-images.githubusercontent.com/76074379/124333883-55e3fe00-db4a-11eb-8e17-538604b1eecc.jpg)
-![{DC07A949-E80A-4A0F-99E3-62844788312B} png](https://user-images.githubusercontent.com/76074379/123259128-fbdb9c80-d4a8-11eb-8e3a-0426f0db199b.jpg)
+ ![{B4BB3DEE-B49F-4D1B-A1D6-C197EBA1E403} png](https://user-images.githubusercontent.com/76074379/124334344-a7d95380-db4b-11eb-8b62-fa22e30ca035.jpg)
+![{30A6CA71-1FE8-49FC-B53E-41A5F08C9CE4} png](https://user-images.githubusercontent.com/76074379/124334346-a90a8080-db4b-11eb-9b05-3c5a2e75668f.jpg)
+![{DC07A949-E80A-4A0F-99E3-62844788312B} png](https://user-images.githubusercontent.com/76074379/124334350-a9a31700-db4b-11eb-87c4-3b27d1a8c2fb.jpg)
+![{3F0F6E04-9341-41B6-8689-5A0C9B12E2F5} png](https://user-images.githubusercontent.com/76074379/124334352-a9a31700-db4b-11eb-81af-6b1568130fa0.jpg)
+![{844AC8F2-4655-4DA1-A255-D659BCE1F23C} png](https://user-images.githubusercontent.com/76074379/124334377-bd4e7d80-db4b-11eb-920f-c4f71bfa1a8e.jpg)
 
 ## Step 2: Proceed with Compute Resources
 ### Step 2.1: Setup Compute Resources for Nginx
 - Provision EC2 Instances for Nginx
   - Create a t2.micro RHEL 8 instance in any of your two public AZs
-  - Install the following packages (we will be installing these packages a lot, so you can write a basic Ansible playbook that installs them)
+  - Install the following packages
     ```
     epel-release
     python
@@ -105,11 +106,15 @@
     ```
     #!/bin/bash
     yum update -y
-    yum install -y nginx
-    systemctl start nginx
+    mkdir -p /var/www/html
+    echo "hello world from $(hostname)" > /var/www/html/healthstatus
+    yum install nginx -y
+    sed -i 's/\/usr\/share\/nginx\/html/\/var\/www\/html/' /etc/nginx/nginx.conf
     systemctl enable nginx
+    setenforce 0
+    systemctl restart nginx 
+    yum install -y git
     ```
-    ![](imgs/ltnginx.png)
 - Configure Target Groups
   - Select instances as target type 
   - Enter the target group name
