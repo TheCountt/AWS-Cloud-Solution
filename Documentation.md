@@ -210,17 +210,37 @@ We have to create two launch templates for Wordpress and Tooling respectively.
     - Give the AMI a name
 - Prepare Launch Template for Webservers
   - From EC2 Console, click Launch Templates from the left pane
-  - Choose the Tooling AMI
+  - Choose the Wordpress AMI
   - Select the instance type (t2.micro)
   - Select the key pair
   - Select the security group
   - Add resource tags
-  - Click Advanced details, scroll down to the end and configure the user data script to update the yum repo and install nginx
+  - Click Advanced details, scroll down to the end and configure the user data script to update yum package, install apache,create health status file,install wordpress, install     efs(which will be specified later) an other necessary programs, modules and dependencies
     ```
     #!/bin/bash
     yum update -y
-    yum install -y git php php-fpm php-mysqlnd
+    yum install -y httpd
+    systemctl start httpd
+    systemctl enable httpd
+    touch /var/www/html/healthstatus
+    echo "wp from $(hostname)" >> /var/www/html/healthstatus
+    yum install -y git
+    yum install -y mysql
+    yum install -y php php-{mysqlnd,cli,gd,common,mbstring,fpm,json}
+    wget http://wordpress.org/latest.tar.gz
+    tar xzvf latest.tar.gz
+    yum install -y rpm-build
+    git clone https://github.com/aws/efs-utils
+    cd /efs-utils
+    yum -y install make
+    make rpm
+    yum -y install ./build/amazon-efs-utils*rpm
+    setenforce 0
+    systemctl restart httpd
     ```
+    Repeat the above steps for Tooling Webserver. Check user data for Tooling Webserver below:
+    
+    
 - Configure Target Groups
   - Select instances as target type 
   - Enter the target group name
