@@ -266,10 +266,12 @@ We have to create two launch templates for Wordpress and Tooling respectively.
   - Select the VPC you created
   - For health checks, select HTTPS and health check path as /healthstatus
   - Add Tags
-  - Register Bastion instances as targets
-- Configure Autoscaling for Nginx
+  - Register Webserver(tooling and wordpress) instances as targets
+  
+- Configure Autoscaling for Webservers
+For Tooling
   - Enter the name
-  - Select the Bastion launch template, click Next
+  - Select the appropriate launh template, click Next
   - Select the VPC and select the two public subnets you created, click Next
   - For health checks, select ELB too. Click Next.
   - For Group size, enter 2 for minimum and desired capacity, 4 as maximum capacity
@@ -278,12 +280,11 @@ We have to create two launch templates for Wordpress and Tooling respectively.
   - Add Tags
     Repeat the above steps for Wordpress
 
-    ![](imgs/ltall.png)
 ### Step 2.5: TLS Certificates from Amazon Certificate Manager (ACM)
 - Navigate to AWS ACM
 - Under 'Provision certificates' click Get started
 - Click Request a certificate
-- Enter the domain name you registered (*.\<domain-name>.com), click next
+- Enter the domain name you registered (<domain-name>.com).Also enter additional domain names (tooling.<domain-name>.com, www.<domain-name>.com) to be used in the project.       Click next
 - Select DNS validation and click Next
 - Tag the certificate, click Review then confirm and request
 - Click Continue
