@@ -362,6 +362,10 @@ Repeat above steps for Wordpress
 - Select the VPC you created, select the two AZs and choose the private subnets
 - Select the EFS security group for each AZ
 - Click next, next then create
+![{2BB96602-1248-44A3-89EE-D9B1FCB9A133} png](https://user-images.githubusercontent.com/76074379/124367062-03b5e200-dc09-11eb-916f-9978210ffe11.jpg)
+
+- Create an EFS access point. (Give it a name and leave all other settings as default)
+![{523EE8BA-BB52-44BE-9025-9998569A9095} png](https://user-images.githubusercontent.com/76074379/124367141-8d65af80-dc09-11eb-9dd4-b1a59efe8eec.jpg)
 
 ## Step 5: Setup RDS
 ### Step 5.1: Create a KMS key
@@ -369,7 +373,10 @@ Repeat above steps for Wordpress
 - Click create key
 - Make sure it's symmetric
 - Give the key an alias
-- For 'Define Key admininstrative privileges', select AWSServiceRoleForRDS and OrganizationAccountAccessRole
+- For 'Define Key admininstrative privileges', select AWSServiceRoleForRDS and rdsMonitoringRole
+
+![{AB88012C-7F94-4616-89DE-BDB4C40B2F74} png](https://user-images.githubusercontent.com/76074379/124367186-e6cdde80-dc09-11eb-9ed9-c6e4619c4899.jpg)
+
 - Select the same thing for Key usage
 - Click Finish
 
@@ -381,6 +388,8 @@ Repeat above steps for Wordpress
 - Enter the name, description and select your VPC
 - Under Add subnets, select the two AZs your data layer subnets are in and select the two private data layer subnets.
 - Click Create
+
+![{6EC64FA0-C2DE-4151-B20A-85C17AD0D0EC} png](https://user-images.githubusercontent.com/76074379/124367227-2ac0e380-dc0a-11eb-9369-db42e2452b4d.jpg)
 
 ### Step 5.3: Create RDS Instance
 - Navigate to RDS Management Console
@@ -397,6 +406,7 @@ Repeat above steps for Wordpress
 - Leave everything else, scroll down to Encryption and select the KMS key you created
 - Scroll down and click Create database
 
+![{1D2C2675-1F4A-4E2C-8FF9-ED89510F0C23} png](https://user-images.githubusercontent.com/76074379/124367257-72476f80-dc0a-11eb-9ce7-c0625f28019a.jpg)
 
 ## Step 6: Configure DNS with Route 53
 - Create a CNAME record that points www.domain.com to the DNS name of your NGINX load balancer
@@ -432,7 +442,13 @@ Repeat above steps for Wordpress
 	  }
   }
   ```
+![{9DA7708A-4274-402A-A491-E96AFEDE7E74} png](https://user-images.githubusercontent.com/76074379/124367321-09142c00-dc0b-11eb-8c41-9d7122a459a2.jpg)
 
+![{DC558EFC-2080-480A-AD2D-F60E0DDAA084} png](https://user-images.githubusercontent.com/76074379/124367332-1d582900-dc0b-11eb-8d9a-0cdad5d4491a.jpg)
+
+![{E0B9ED33-9FC3-4DED-8AEB-6C04FB4E3C92} png](https://user-images.githubusercontent.com/76074379/124367362-52647b80-dc0b-11eb-818f-b52dce6bfa1a.jpg)
+
+![{BE97DCE5-9775-4C05-9721-E313A6CB7433} png](https://user-images.githubusercontent.com/76074379/124367368-57292f80-dc0b-11eb-8748-d962b0a489b5.jpg)
 
 # Blockers
 
