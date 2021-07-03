@@ -462,3 +462,7 @@ sudo systemctl restart httpd
 ```
 
 - I was getting a 502 Bad Gateway error, to solve this, I checked the logs for my nginx instance (I had to SSH into it) and noticed it was returning a permission denied error, so I disabled SELinux in by opening /etc/sysconfig/selinux by setting the SELinux to disabled. I also disabled SElinux on the webservers.
+
+# Credits
+
+darey.io
