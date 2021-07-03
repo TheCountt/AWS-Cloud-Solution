@@ -26,7 +26,22 @@
    
 - Ensure to tag all resources you create (Project, Environment, Name etc)
 
-## Step 1: Setup a Virtual Private Cloud
+## Step 1: TLS Certificates from Amazon Certificate Manager (ACM)
+- Navigate to AWS ACM
+- Under 'Provision certificates' click Get started
+- Click Request a certificate
+- Enter the domain name you registered (<*domain-name>.com*).Also enter additional domain names:
+   - *tooling.<*domain-name>.com*
+   - *www.<*domain-name>.com*).
+- Click next
+- Select DNS validation and click Next
+- Tag the certificate, click Review then confirm and request
+- Click Continue
+- Click 'Export DNS Configuration file'
+- Go to Route 53
+- Create a new CNAME record with items from the DNS configuration.csv file downloaded.
+
+## Step 2: Setup a Virtual Private Cloud
 ![tooling_project_15](https://user-images.githubusercontent.com/76074379/123254593-b4064680-d4a3-11eb-8099-329e9fb7c060.png)
 
 - Create a VPC from the VPC Management Console use a large enough CIDR block (/16)
@@ -115,17 +130,36 @@
     systemctl restart nginx 
     yum install -y git
     ```
-- Configure Target Groups
+- Configure Target Group (for both Port 80)
   - Select instances as target type 
   - Enter the target group name
   - Select the VPC you created
-  - For health checks, select HTTPS and health check path as /healthstatus
+  - For health checks, select HTTP(port 80) and health check path as /healthstatus
   - Add Tags
   - Register Nginx instances as targets
+ Note: In order to avoid confusion to a newbie. I will opt to ceate an Application Load Balancer and configure rather than try to create an HTTPS Target Group straight away. Reason for this will be clear as one develop familiarity with the project.
+ 
+- Configure Application Load Balancer (ALB) for Nginx
+Nginx instances should only accept connections coming from the ALB and deny any connections directly to it.
+- Create an internet facing ALB
+  - From the EC2 Console, click Load Balancers. 
+  - On the block for Application Load Balancers, click create
+  - Enter the name for the load balancer
+  - Since it's for the Nginx servers, add a HTTPS Listener
+  - Select the VPC you created, check the two AZs and add the public subnets you have. Click next.
+  - Select the certificate you created on ACM
+  - On the next page, select the ALB security group
+  - Configure routing, select the Nginx target group for port 443
+  - Register Nginx instances as targets (if you were not able to configure target group for HTTPS(port 443) in the above step)
+  - for health checks, select HTTPS(port 443) and health check path as /healthstatus
+  - Click Review and complete the process
+  
+  You may add HTTP Listener and the corresponding Target Group
 
 - Configure Autoscaling for Nginx
   - Enter the name
   - Select the Nginx launch template, click Next
+  - For Load Balancer, Click Existing Load Balancer and add the right Target Groups( for both port 80 and 443)
   - Select the VPC and select the two public subnets you created, click Next
   - For health checks, select ELB too. Click Next.
   - For Group size, enter 2 for minimum and desired capacity, 4 as maximum capacity
@@ -264,14 +298,31 @@ We have to create two launch templates for Wordpress and Tooling respectively.
   - Select instances as target type 
   - Enter the target group name
   - Select the VPC you created
-  - For health checks, select HTTPS and health check path as /healthstatus
+  - For health checks, select HTTP and health check path as /healthstatus
   - Add Tags
-  - Register Webserver(tooling and wordpress) instances as targets
+  - Register Tooling instance as target
+
+Repeat above steps for Wordpress
   
-- Configure Autoscaling for Webservers
+- Configure ALB for Webservers
+The ALB for the webservers should not be internet facing. And we'll need two ALBs, one for Tooling and Wordpress
+- Create an internal ALB
+  - From the EC2 Console, click Load Balancers. 
+  - On the block for Application Load Balancers, click create
+  - Enter the name for the load balancer
+  - Select the VPC you created, check the two AZs and add the private subnets you have. Click next.
+  - On the next page, select the webserver security group
+  - Configure routing, select the Tooling target group
+  - Register targets (unnecessary if you configured your target group correctly)
+  - Click Review and complete the process
+  
+    Repeat the above steps for the Wordpress ALB
+
+- Configure Autoscaling for Webservers(Tooling and Wordpress)
+
 For Tooling
   - Enter the name
-  - Select the appropriate launh template, click Next
+  - Select the appropriate launch template, click Next
   - Select the VPC and select the two public subnets you created, click Next
   - For health checks, select ELB too. Click Next.
   - For Group size, enter 2 for minimum and desired capacity, 4 as maximum capacity
@@ -279,33 +330,6 @@ For Tooling
   - Click Next and add Notifications, create a new SNS topic and enter your email under 'With these recipients'
   - Add Tags
     Repeat the above steps for Wordpress
-
-### Step 2.5: TLS Certificates from Amazon Certificate Manager (ACM)
-- Navigate to AWS ACM
-- Under 'Provision certificates' click Get started
-- Click Request a certificate
-- Enter the domain name you registered (<*domain-name>.com*).Also enter additional domain names (*tooling.<*domain-name>.com* *www.<*domain-name>.com*) to be used in the project. Click next
-- Select DNS validation and click Next
-- Tag the certificate, click Review then confirm and request
-- Click Continue
-- Click 'Export DNS Configuration file'
-- Go to Route 53
-- Create a new CNAME record with items from the DNS configuration.csv file downloaded.
-
-### Step 2.4: Configure Application Load Balancer (ALB) for Nginx
-Nginx instances should only accept connections coming from the ALB and deny any connections directly to it.
-- Create an internet facing ALB
-  - From the EC2 Console, click Load Balancers. 
-  - On the block for Application Load Balancers, click create
-  - Enter the name for the load balancer
-  - Since it's for the Nginx servers, add a HTTPS Listener
-  - Select the VPC you created, check the two AZs and add the public subnets you have. Click next.
-  - Select the certificate you created on ACM
-    ![](imgs/albacm.png)
-  - On the next page, select the ALB security group
-  - Configure routing, select the Nginx target group
-  - Register targets (unnecessary if you configured your target group correctly)
-  - Click Review and complete the process
 
 ### Step 2.5: Configure ALB for Webservers
 The ALB for the webservers should not be internet facing. And we'll need two ALBs, one for Tooling and Wordpress
