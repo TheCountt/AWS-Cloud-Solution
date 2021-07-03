@@ -93,9 +93,9 @@
 ![{3F0F6E04-9341-41B6-8689-5A0C9B12E2F5} png](https://user-images.githubusercontent.com/76074379/124334352-a9a31700-db4b-11eb-81af-6b1568130fa0.jpg)
 ![{844AC8F2-4655-4DA1-A255-D659BCE1F23C} png](https://user-images.githubusercontent.com/76074379/124334377-bd4e7d80-db4b-11eb-920f-c4f71bfa1a8e.jpg)
 
-## Step 2: Proceed with Compute Resources
+## Step 3: Proceed with Compute Resources
 
-### Step 2.1: Setup Compute Resources for Nginx
+### Step 3.1: Setup Compute Resources for Nginx
 
 - Provision EC2 Instances for Nginx
   - Create a t2.micro RHEL 8 instance in any of your two public AZs
@@ -175,7 +175,7 @@ Nginx instances should only accept connections coming from the ALB and deny any 
   - Click Next and add Notifications, create a new SNS topic and enter your email under 'With these recipients'
   - Add Tags
   
-### Step 2.2: Setup Compute Resources for Bastion
+### Step 3.2: Setup Compute Resources for Bastion
 
 - Provision EC2 Instances for Bastion server
   - Create a t2.micro RHEL 8 instance in any of your two public AZs where you created Nginx instances
@@ -235,7 +235,7 @@ Nginx instances should only accept connections coming from the ALB and deny any 
 
 
 
-### Step 2.3: Setup Compute Resources for Webservers
+### Step 3.3: Setup Compute Resources for Webservers
 
 We have to create two launch templates for Wordpress and Tooling respectively.
 
@@ -352,7 +352,7 @@ Repeat above steps for Wordpress
   - Add Tags
     Repeat the above steps for Wordpress
 
-## Step 3: Setup EFS
+## Step 4: Setup EFS
 - Navigate to EFS from your Management Console
 - Click create file system from the right
 - Click Customize
@@ -363,8 +363,8 @@ Repeat above steps for Wordpress
 - Select the EFS security group for each AZ
 - Click next, next then create
 
-## Step 4: Setup RDS
-### Step 4.1: Create a KMS key
+## Step 5: Setup RDS
+### Step 5.1: Create a KMS key
 - Navigate to AWS KMS
 - Click create key
 - Make sure it's symmetric
@@ -373,7 +373,7 @@ Repeat above steps for Wordpress
 - Select the same thing for Key usage
 - Click Finish
 
-### Step 4.2: Create a DB Subnet Group
+### Step 5.2: Create a DB Subnet Group
 - Navigate to RDS Management Console
 - Click the three horizontal lines on the top left
 - Select Subnet groups
@@ -382,7 +382,7 @@ Repeat above steps for Wordpress
 - Under Add subnets, select the two AZs your data layer subnets are in and select the two private data layer subnets.
 - Click Create
 
-### Step 4.3: Create RDS Instance
+### Step 5.3: Create RDS Instance
 - Navigate to RDS Management Console
 - Click Create database
 - For Engine options, select MySQL
@@ -398,11 +398,11 @@ Repeat above steps for Wordpress
 - Scroll down and click Create database
 
 
-## Step 5: Configure DNS with Route 53
+## Step 6: Configure DNS with Route 53
 - Create a CNAME record that points www.domain.com to the DNS name of your NGINX load balancer
 - Create a CNAME record that points tooling.domain.com to the DNS name of your NGINX load balancer
 
-### Step 5.2
+### Step 6.2
 - Create two configuration files (one for tooling, one for wordpress) for the nginx load balancer and add to a github repo so you can pull the config during a scale out
 - The tooling config file should contain the following settings: 
   ```
