@@ -27,6 +27,7 @@
 - Ensure to tag all resources you create (Project, Environment, Name etc)
 
 ## Step 1: TLS Certificates from Amazon Certificate Manager (ACM)
+
 - Navigate to AWS ACM
 - Under 'Provision certificates' click Get started
 - Click Request a certificate
@@ -42,6 +43,7 @@
 - Create a new CNAME record with items from the DNS configuration.csv file downloaded.
 
 ## Step 2: Setup a Virtual Private Cloud
+
 ![tooling_project_15](https://user-images.githubusercontent.com/76074379/123254593-b4064680-d4a3-11eb-8099-329e9fb7c060.png)
 
 - Create a VPC from the VPC Management Console use a large enough CIDR block (/16)
@@ -92,7 +94,9 @@
 ![{844AC8F2-4655-4DA1-A255-D659BCE1F23C} png](https://user-images.githubusercontent.com/76074379/124334377-bd4e7d80-db4b-11eb-920f-c4f71bfa1a8e.jpg)
 
 ## Step 2: Proceed with Compute Resources
+
 ### Step 2.1: Setup Compute Resources for Nginx
+
 - Provision EC2 Instances for Nginx
   - Create a t2.micro RHEL 8 instance in any of your two public AZs
   - Install the following packages
@@ -131,6 +135,7 @@
     yum install -y git
     ```
 - Configure Target Group (for both Port 80)
+  
   - Select instances as target type 
   - Enter the target group name
   - Select the VPC you created
@@ -140,7 +145,9 @@
  Note: In order to avoid confusion to a newbie. I will opt to ceate an Application Load Balancer and configure rather than try to create an HTTPS Target Group straight away. Reason for this will be clear as one develop familiarity with the project.
  
 - Configure Application Load Balancer (ALB) for Nginx
+  
 Nginx instances should only accept connections coming from the ALB and deny any connections directly to it.
+
 - Create an internet facing ALB
   - From the EC2 Console, click Load Balancers. 
   - On the block for Application Load Balancers, click create
@@ -157,6 +164,7 @@ Nginx instances should only accept connections coming from the ALB and deny any 
   You may add HTTP Listener and the corresponding Target Group
 
 - Configure Autoscaling for Nginx
+  
   - Enter the name
   - Select the Nginx launch template, click Next
   - For Load Balancer, Click Existing Load Balancer and add the right Target Groups( for both port 80 and 443)
@@ -168,6 +176,7 @@ Nginx instances should only accept connections coming from the ALB and deny any 
   - Add Tags
   
 ### Step 2.2: Setup Compute Resources for Bastion
+
 - Provision EC2 Instances for Bastion server
   - Create a t2.micro RHEL 8 instance in any of your two public AZs where you created Nginx instances
   - Install the following packages
@@ -186,6 +195,7 @@ Nginx instances should only accept connections coming from the ALB and deny any 
     - Right click on the instance
     - Select Image and click Create Image
     - Give the AMI a name
+
 - Prepare Launch Template for Nginx
   - From EC2 Console, click Launch Templates from the left pane
   - Choose the Bastion AMI
@@ -213,6 +223,7 @@ Nginx instances should only accept connections coming from the ALB and deny any 
   - Register Bastion instances as targets
 
 - Configure Autoscaling for Nginx
+  
   - Enter the name
   - Select the Bastion launch template, click Next
   - Select the VPC and select the two public subnets you created, click Next
@@ -222,8 +233,12 @@ Nginx instances should only accept connections coming from the ALB and deny any 
   - Click Next and add Notifications, create a new SNS topic and enter your email under 'With these recipients'
   - Add Tags
 
+
+
 ### Step 2.3: Setup Compute Resources for Webservers
+
 We have to create two launch templates for Wordpress and Tooling respectively.
+
 - Provision two EC2 Instances one for Tooling and another for Wordpress
   - Create a t2.micro RHEL 8 instance in any of your two public AZs where you created Nginx instances
   - Install the following packages
@@ -242,6 +257,7 @@ We have to create two launch templates for Wordpress and Tooling respectively.
     - Right click on the instance
     - Select Image and click Create Image
     - Give the AMI a name
+
 - Prepare Launch Template for Webservers
   - From EC2 Console, click Launch Templates from the left pane
   - Choose the Wordpress AMI
@@ -295,6 +311,7 @@ We have to create two launch templates for Wordpress and Tooling respectively.
     ```
     
 - Configure Target Groups
+  
   - Select instances as target type 
   - Enter the target group name
   - Select the VPC you created
@@ -305,8 +322,11 @@ We have to create two launch templates for Wordpress and Tooling respectively.
 Repeat above steps for Wordpress
   
 - Configure ALB for Webservers
-The ALB for the webservers should not be internet facing. And we'll need two ALBs, one for Tooling and Wordpress
+
+   The ALB for the webservers should not be internet facing. And we'll need two ALBs, one for Tooling and Wordpress
+
 - Create an internal ALB
+  
   - From the EC2 Console, click Load Balancers. 
   - On the block for Application Load Balancers, click create
   - Enter the name for the load balancer
@@ -320,7 +340,8 @@ The ALB for the webservers should not be internet facing. And we'll need two ALB
 
 - Configure Autoscaling for Webservers(Tooling and Wordpress)
 
-For Tooling
+  For Tooling
+  
   - Enter the name
   - Select the appropriate launch template, click Next
   - Select the VPC and select the two public subnets you created, click Next
@@ -331,20 +352,6 @@ For Tooling
   - Add Tags
     Repeat the above steps for Wordpress
 
-### Step 2.5: Configure ALB for Webservers
-The ALB for the webservers should not be internet facing. And we'll need two ALBs, one for Tooling and Wordpress
-- Create an internal ALB
-  - From the EC2 Console, click Load Balancers. 
-  - On the block for Application Load Balancers, click create
-  - Enter the name for the load balancer
-  - Select the VPC you created, check the two AZs and add the private subnets you have. Click next.
-  - On the next page, select the webserver security group
-  - Configure routing, select the Tooling target group
-  - Register targets (unnecessary if you configured your target group correctly)
-  - Click Review and complete the process
-  
-    Repeat the above steps for the Wordpress ALB
-
 ## Step 3: Setup EFS
 - Navigate to EFS from your Management Console
 - Click create file system from the right
@@ -354,7 +361,6 @@ The ALB for the webservers should not be internet facing. And we'll need two ALB
 - Leave everything else and click next
 - Select the VPC you created, select the two AZs and choose the private subnets
 - Select the EFS security group for each AZ
-  ![](imgs/efs-sg.png)
 - Click next, next then create
 
 ## Step 4: Setup RDS
@@ -363,10 +369,10 @@ The ALB for the webservers should not be internet facing. And we'll need two ALB
 - Click create key
 - Make sure it's symmetric
 - Give the key an alias
-- For 'Define Key admininstrative privileges', select AWSServiceRoleForRDS and OrganizationAccountAccessRole ![](imgs/kms-config.png)
+- For 'Define Key admininstrative privileges', select AWSServiceRoleForRDS and OrganizationAccountAccessRole
 - Select the same thing for Key usage
 - Click Finish
-  ![](imgs/kms.png)
+
 ### Step 4.2: Create a DB Subnet Group
 - Navigate to RDS Management Console
 - Click the three horizontal lines on the top left
@@ -375,7 +381,7 @@ The ALB for the webservers should not be internet facing. And we'll need two ALB
 - Enter the name, description and select your VPC
 - Under Add subnets, select the two AZs your data layer subnets are in and select the two private data layer subnets.
 - Click Create
-  ![](imgs/dbgroup.png)
+
 ### Step 4.3: Create RDS Instance
 - Navigate to RDS Management Console
 - Click Create database
@@ -387,21 +393,21 @@ The ALB for the webservers should not be internet facing. And we'll need two ALB
 - Under Availability, select do not create a standby instance
 - Select your VPC, select the subnet group you created and also the data layer security group
 - Leave everything else and scroll down to Additional configuration
-- Enter initial database name (if you wish, or you could connect to it from your webserver and create required databases)
+- Enter initial database name (but i'll personally recommend you connect to it from your webservers and create required databases)
 - Leave everything else, scroll down to Encryption and select the KMS key you created
 - Scroll down and click Create database
 
-## Step 5: Tie Everything Together
-### Step 5.1: Configure DNS with Route 53
+
+## Step 5: Configure DNS with Route 53
 - Create a CNAME record that points www.domain.com to the DNS name of your NGINX load balancer
 - Create a CNAME record that points tooling.domain.com to the DNS name of your NGINX load balancer
-  ![](imgs/records.png)
+
 ### Step 5.2
-- Create two config files (one for tooling, one for wordpress) for the nginx load balancer and add to a github repo so you can pull the config during a scale out
+- Create two configuration files (one for tooling, one for wordpress) for the nginx load balancer and add to a github repo so you can pull the config during a scale out
 - The tooling config file should contain the following settings: 
   ```
   server {
-    server_name tooling.domain.com; # company tooling site
+    server_name tooling.domain.com; # tooling site
     location ~ { # case-sensitive regular expression match
 		include /etc/nginx/mime.types;
 	    proxy_redirect      off;
@@ -415,7 +421,7 @@ The ALB for the webservers should not be internet facing. And we'll need two ALB
   The wordpress config file:
   ```
   server {
-    server_name domain.com www.domain.com; # company tooling site
+    server_name domain.com www.domain.com; # tooling site
     location ~ { # case-sensitive regular expression match
 		include /etc/nginx/mime.types;
 	    proxy_redirect      off;
@@ -426,11 +432,11 @@ The ALB for the webservers should not be internet facing. And we'll need two ALB
 	  }
   }
   ```
-  ![](imgs/end.png)
+
 
 # Blockers
 
-- I had to install mod_ssl module manually on the apache webservers. After installing the module on my webservers, my target webserver instances on passed the healthcheck on port 443(HTTPS). For more on mod_ssl, https://en.wikipedia.org/wiki/Mod_ssl. I ran the following commands:
+- I had to install mod_ssl module manually on the apache webservers after because the error logs indicated it was missing. After installing the module on my webservers, my target webserver instances on passed the healthcheck on port 443(HTTPS). For more on mod_ssl, https://en.wikipedia.org/wiki/Mod_ssl. I ran the following commands:
 ```
 sudo dnf install -y mod_ssl
 
@@ -439,13 +445,4 @@ apachectl -M | grep ssl
 sudo systemctl restart httpd
 ```
 
-- I was getting a 502 Bad Gateway error, to solve this, I checked the logs for my nginx instance (I had to SSH into it) and noticed it was returning a permission denied error, so I did:
-  ```
-  sudo setsebool -P httpd_can_network_connect 1
-  ```
-- To solve 403 errors that may arise from the internal webservers, simply add the above command to the user data script.
-- While settting up RDS to connect to Wordpress, I forgot to create a database for Wordpress. Also I couldn't get the webservers to connect to the db, so I executed the following:
-  ```
-  sudo setsebool -P httpd_can_network_connect_db 1
-  ```
-- To deploy the applications, I used Ansible to configure tooling servers, manually configured Wordpress, from the Bastion instance.
+- I was getting a 502 Bad Gateway error, to solve this, I checked the logs for my nginx instance (I had to SSH into it) and noticed it was returning a permission denied error, so I disabled SELinux in by opening /etc/sysconfig/selinux by setting the SELinux to disabled. I also disabled SElinux on the webservers.
