@@ -33,8 +33,8 @@
 - Click Request a certificate
 - Enter the domain name you registered (<*domain-name>.com*).Also enter additional domain names:
    - tooling.<*domain-name>.com*
-   - www.<*domain-name>.com*.
-- Click next
+   - www.<*domain-name>.com*
+- Click Next
 - Select DNS validation and click Next
 - Tag the certificate, click Review then confirm and request
 - Click Continue
